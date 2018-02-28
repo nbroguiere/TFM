@@ -1,5 +1,3 @@
-TFM3D - Readme.md
-
 Copyright (C) 2018 Nicolas Broguiere
 
 This program is free software: you can redistribute it and/or modify
