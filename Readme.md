@@ -11,6 +11,8 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
+The complete license information is found in License_GPL3.txt
+
 # Overview
 This Matlab series of scripts enables 3D traction force microscopy in biological applications. It is implemented with a simple tracking on a cubic mesh of matrix deformations by cross-correlation, followed by force reconstruction under the assumptions of linear elastic isotropic materials under small deformations.
 
