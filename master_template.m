@@ -1,8 +1,12 @@
-% Location of the scripts:
-addpath(genpath('copy_TFM_release1_location_here'));
-addpath(genpath('copy_BioFormats_location_here'));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        Location of the scripts                          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+addpath(genpath('copy_TFM_scripts_location_here'));
+addpath(genpath('copy_BioFormatsMatlabToolbox_location_here'));
 
-% Information about the video to be analyzed:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             Information about the video to be analyzed                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % (Video including the reference frame, exported as a .tif 8 bit composite hyperstack from Fiji) 
 input_stack='my_raw_data.tif';
 n_colors=2;         % Total number of color channels
@@ -11,8 +15,8 @@ tracking_channel=1; % The channel which contains the matrix tag (e.g. fluorescen
 channel_cell=2;     % The channel which contains cell data (e.g. membrane targeted GFP or cell tracker)
 timestep=2;         % Only relevant with time-lapse data
 timeunit='min';     % Only relevant with time-lapse data
-pxsize_xy=0.2;      % in um (micrometers)
-pxsize_z=0.4;       % in um
+pxsize_xy=0.2;      % In um (micrometers)
+pxsize_z=0.4;       % In um
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                  Cell segmentation parameters:                          %
