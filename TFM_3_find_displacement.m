@@ -7,13 +7,15 @@ clear Ufit Ffit cell_surface_found
 box_size_xy2=box_size_xy-1;
 box_size_z2=box_size_z-1;
 
-% Separating layers and timepoints, and zero-padding:
+% Separating layers and timepoints, zero-padding, and removing the inner cell content from the tracking (fill with nan):
 border_xy=box_size_xy2/2+max_distance_correlation_xy+2;
 border_z=box_size_z2/2+max_distance_correlation_z+2;
 
 img_padded=zeros([n_px+2*border_xy,n_layers+2*border_z,n_timepoints]);
+img_threshold_padded=zeros([n_px+2*border_xy,n_layers+2*border_z,n_timepoints],'logical');
 for t=1:n_timepoints
     img_padded(:,:,:,t)=padarray(squeeze(img(:,:,tracking_channel,:,t)),[border_xy border_xy border_z]);
+    img_threshold_padded(:,:,:,t)=padarray(img_threshold(:,:,:,t),[border_xy border_xy border_z],1);    % the cell position and borders are marked with ones, and will be excluded from the tracking. 
 end
 
 % Redefine the dimensions taking into account the pads: 
@@ -63,6 +65,7 @@ for t=ti:n_timepoints
             img_ref=img_t;
         end
         img_t=img_padded(:,:,:,t);
+        img_thresh_t=img_threshold_padded(:,:,:,t);
         
         parfor k=1:nz   % xyz is the position of the center of the box that is carried around. Leave a half box size out on the side (so whole box until the center) so the box can be translated without going out, +1 pixel so even with the subpixel step it doesnt go out. 
             disp([k nz t n_timepoints]);
@@ -72,7 +75,9 @@ for t=ti:n_timepoints
                 for i=1:nx
                     x=xrange2(i);
                     box_ref=double(img_ref(x-hw:x+hw,y-hw:y+hw,z-hh:z+hh));
-                    box=img_t(x-box_size_xy2/2:x+box_size_xy2/2,y-box_size_xy2/2:y+box_size_xy2/2,z-box_size_z2/2:z+box_size_z2/2);
+                    box=double(img_t(x-box_size_xy2/2:x+box_size_xy2/2,y-box_size_xy2/2:y+box_size_xy2/2,z-box_size_z2/2:z+box_size_z2/2));
+                    nanmask=img_thresh_t(x-box_size_xy2/2:x+box_size_xy2/2,y-box_size_xy2/2:y+box_size_xy2/2,z-box_size_z2/2:z+box_size_z2/2);
+                    box(nanmask)=nan;
                     TxyzCC=xcorr3subpxnormQuadInt(box,box_ref);
                     Txyz=TxyzCC(1:3);                                           % T is the image translation in pixels
                     CC=TxyzCC(4);
