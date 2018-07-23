@@ -9,6 +9,13 @@ function [output] = xcorr3subpxnormQuadInt(box,ref)
 % Parts of this algorithm are inspired by: 
 % Manuel Guizar-Sicairos, Samuel T. Thurman, and James R. Fienup, 
 % "Efficient subpixel image registration algorithms," Opt. Lett. 33, 156-158 (2008).
+%
+% This version has been additionally modified to accept boxes which contain
+% nan values. They are considered as areas with no data. If the
+% ref also contains nan values, the algorithm won't crash, but the result
+% will not necessarily be accurate (managing appropriately nan values in the
+% ref is not possible with the current fast normalization algorithm). 
+
 
 if length(size(ref))~=3 || length(size(box))~=3
     error('The inputs are not 3D, terminating') % One possibility: if not 3D or if not a pixel of manoeuver available, add 1px of 0-padding on the ref, to avoid crashes. 
@@ -36,16 +43,21 @@ limit = floor(size(ref)/2)-floor(size(box)/2);
 box=double(box);
 ref=double(ref);
 
-% Normalize the moving box:
-N=numel(box);
-box=(box-mean(box(:)));
-tmp=mean(box(:).*box(:));
-if tmp==0
+% Normalize the moving box (subtract the mean and divide by std):
+N=numel(box)-sum(isnan(box(:)));
+if N==0
+    disp('The moving box is entirely filled with nans. xcorr not defined (set to 0)');
+    output=[0 0 0 0];
+    return
+end
+box=(box-mean(box(:),'omitnan'));
+std_tmp=mean(box(:).*box(:),'omitnan');
+if std_tmp==0
     disp('Standard deviation of the moving box is 0. xcorr not defined (set to 0)');
     output=[0 0 0 0];
     return
 else
-    box=box/(sqrt(tmp));
+    box=box/(sqrt(std_tmp));
 end
 
 % Compute the standard deviations of the reference under each box position:
@@ -74,8 +86,16 @@ s2=zeros(tmp);
 for u=1:size(ref,1)
     for v=1:size(ref,2)
         for w=1:size(ref,3)
-            s(u+1,v+1,w+1)=ref(u,v,w)+s(u,v+1,w+1)+s(u+1,v,w+1)+s(u+1,v+1,w)-s(u,v,w+1)-s(u,v+1,w)-s(u+1,v,w)+s(u,v,w);
-            s2(u+1,v+1,w+1)=ref2(u,v,w)+s2(u,v+1,w+1)+s2(u+1,v,w+1)+s2(u+1,v+1,w)-s2(u,v,w+1)-s2(u,v+1,w)-s2(u+1,v,w)+s2(u,v,w);
+            if isnan(ref(u,v,w))
+                s(u+1,v+1,w+1)      =     s(u,v+1,w+1)+s(u+1,v,w+1)+s(u+1,v+1,w)-s(u,v,w+1)-s(u,v+1,w)-s(u+1,v,w)+s(u,v,w);
+            else
+                s(u+1,v+1,w+1)=ref(u,v,w)+s(u,v+1,w+1)+s(u+1,v,w+1)+s(u+1,v+1,w)-s(u,v,w+1)-s(u,v+1,w)-s(u+1,v,w)+s(u,v,w);
+            end
+            if isnan(ref2(u,v,w))
+                s2(u+1,v+1,w+1)     =       s2(u,v+1,w+1)+s2(u+1,v,w+1)+s2(u+1,v+1,w)-s2(u,v,w+1)-s2(u,v+1,w)-s2(u+1,v,w)+s2(u,v,w);
+            else
+                s2(u+1,v+1,w+1)=ref2(u,v,w)+s2(u,v+1,w+1)+s2(u+1,v,w+1)+s2(u+1,v+1,w)-s2(u,v,w+1)-s2(u,v+1,w)-s2(u+1,v,w)+s2(u,v,w);
+            end
         end
     end
 end
@@ -94,13 +114,13 @@ for i=-limit(1):limit(1)
             ref_sum=s(xmax,ymax,zmax)-s(xmin,ymax,zmax)-s(xmax,ymin,zmax)-s(xmax,ymax,zmin)+s(xmin,ymin,zmax)+s(xmax,ymin,zmin)+s(xmin,ymax,zmin)-s(xmin,ymin,zmin);
             squ_sum=s2(xmax,ymax,zmax)-s2(xmin,ymax,zmax)-s2(xmax,ymin,zmax)-s2(xmax,ymax,zmin)+s2(xmin,ymin,zmax)+s2(xmax,ymin,zmin)+s2(xmin,ymax,zmin)-s2(xmin,ymin,zmin);
             ref_mean=ref_sum/N;
-            % If there is no contrast (std=0), CC is not defined: set CC to
-            % 0 by setting the std to +Inf
-            tmp=sqrt(squ_sum/N-ref_mean^2);
-            if tmp==0
+            % If there is no contrast in the area (std=0), CC is not defined: set CC to
+            % 0 by setting the std to +Inf            
+            std_tmp=sqrt(squ_sum/N-ref_mean^2);
+            if std_tmp==0
                 ref_std(center_pos(1)+i,center_pos(2)+j,center_pos(3)+k)=+Inf;
             else
-                ref_std(center_pos(1)+i,center_pos(2)+j,center_pos(3)+k)=tmp;
+                ref_std(center_pos(1)+i,center_pos(2)+j,center_pos(3)+k)=std_tmp;
             end
         end
     end
@@ -120,6 +140,8 @@ end
 box=padarray(box,padsize);
 
 % Compute the Fourrier transforms:
+box(isnan(box))=0;
+ref(isnan(ref))=0;
 fft_box=fftn(box);
 fft_box_ref=fftn(ref);
 

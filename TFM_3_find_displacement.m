@@ -63,9 +63,8 @@ for t=ti:n_timepoints
             img_ref=img_t;
         end
         img_t=img_padded(:,:,:,t);
-
+        
         parfor k=1:nz   % xyz is the position of the center of the box that is carried around. Leave a half box size out on the side (so whole box until the center) so the box can be translated without going out, +1 pixel so even with the subpixel step it doesnt go out. 
-%        for k=1:nz   % xyz is the position of the center of the box that is carried around. Leave a half box size out on the side (so whole box until the center) so the box can be translated without going out, +1 pixel so even with the subpixel step it doesnt go out. 
             disp([k nz t n_timepoints]);
             z=zrange2(k);
             for j=1:ny
